@@ -176,6 +176,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
       local batches = {}
       local totalSize = 0
       needLog = true
+      iter_start = sys.clock()
 
       for j = 1, math.min(onmt.utils.Parallel.count, data:batchCount() - i + 1) do
         local batchIdx = getBatchIdx(i + j - 1)
@@ -236,6 +237,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
         self.saver:saveIteration(iter, epochState, batchOrder)
       end
       iter = iter + 1
+      print("iteration = ", i, sys.clock()-iter_start)
     end
   else
     -- Asynchronous training.
