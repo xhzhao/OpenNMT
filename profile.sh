@@ -29,3 +29,12 @@ grep CMulTable_B   $logName | awk '{sum+=$3}END {print "CMulTable_B = " sum/'$it
 
 grep JoinTable_F   $logName | awk '{sum+=$3}END {print "JoinTable_F = " sum/'$iter'}'
 grep JoinTable_B   $logName | awk '{sum+=$3}END {print "JoinTable_B = " sum/'$iter'}'
+
+grep SoftMax_F     $logName | awk '{sum+=$3}END {print "SoftMax_F   = " sum/'$iter'}'
+grep SoftMax_B     $logName | awk '{sum+=$3}END {print "SoftMax_B   = " sum/'$iter'}'
+
+grep LogsoftMax_F  $logName | awk '{sum+=$3}END {print "LogsoftMax_F = " sum/'$iter'}'
+grep LogsoftMax_B  $logName | awk '{sum+=$3}END {print "LogsoftMax_B = " sum/'$iter'}'
+
+grep ClassNLLCriterion_F  $logName | awk '{sum+=$3}END {print "ClassNLLCriterion_F = " sum/'$iter'}'
+grep ClassNLLCriterion_B  $logName | awk '{sum+=$3}END {print "ClassNLLCriterion_B = " sum/'$iter'}'
