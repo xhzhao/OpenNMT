@@ -94,12 +94,15 @@ function Optim:setOptimStates(states)
 end
 
 function Optim:zeroGrad(gradParams)
+  local start=sys.clock()
   for j = 1, #gradParams do
     gradParams[j]:zero()
   end
+  print("Optim_1 = ", sys.clock() - start)
 end
 
 function Optim:prepareGrad(gradParams)
+  local start=sys.clock()
   if self.args.optim ~= 'sgd' and not self.optimStates then
     self.optimStates = {}
     for _ = 1, #gradParams do
@@ -133,6 +136,7 @@ function Optim:prepareGrad(gradParams)
       gradParams[j]:mul(-self.args.learning_rate)
     end
   end
+  print("Optim_2 = ", sys.clock() - start)
 end
 
 function Optim:status()
@@ -144,9 +148,11 @@ function Optim:status()
 end
 
 function Optim:updateParams(params, gradParams)
+  local start=sys.clock()
   for j = 1, #params do
     params[j]:add(gradParams[j])
   end
+  print("Optim_3 = ", sys.clock() - start)
 end
 
 -- decay learning rate if val perf does not improve or we hit the startDecayAt limit
