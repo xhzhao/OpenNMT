@@ -167,11 +167,11 @@ Returns: a copy of `src`.
 --]]
 local function copyTensorTable(proto, src)
   local tab = reuseTensorTable(proto, src[1]:size())
-
+  local start=sys.clock()
   for i = 1, #tab do
     tab[i]:copy(src[i])
   end
-
+  print("copyTensorTable = ", sys.clock() - start)
   return tab
 end
 
