@@ -183,6 +183,7 @@ function Trainer:trainEpoch(data, epoch, startIteration, batchOrder)
         table.insert(batches, data:getBatch(batchIdx))
         totalSize = totalSize + batches[#batches].size
       end
+      print("dataloader = ", sys.clock()-iter_start)
 
       local losses = {}
       local indvAvgLosses = {}
