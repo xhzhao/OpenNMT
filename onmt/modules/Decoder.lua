@@ -438,7 +438,6 @@ function Decoder:backward(batch, outputs, criterion)
     -- Compute the standard backward.
     local gradInput = self:net(t):backward(self.inputs[t], gradStatesInput)
 
-    local start=sys.clock()
     if not gradContextInput then
       gradContextInput = onmt.utils.Tensor.reuseTensor(
         self.gradContextProto,
@@ -463,7 +462,6 @@ function Decoder:backward(batch, outputs, criterion)
   if self.indvLoss then
     indvAvgLoss = torch.cdiv(indvAvgLoss, batch.targetSize:double())
   end
-  print("Decoder_elem = ", sys.clock() - start)
   return gradStatesInput, gradContextInput, loss, indvAvgLoss
 end
 
