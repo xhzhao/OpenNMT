@@ -38,3 +38,17 @@ grep LogsoftMax_B  $logName | awk '{sum+=$3}END {print "LogsoftMax_B = " sum/'$i
 
 grep ClassNLLCriterion_F  $logName | awk '{sum+=$3}END {print "ClassNLLCriterion_F = " sum/'$iter'}'
 grep ClassNLLCriterion_B  $logName | awk '{sum+=$3}END {print "ClassNLLCriterion_B = " sum/'$iter'}'
+
+grep Dropout_F  $logName | awk '{sum+=$3}END {print "Dropout_F = " sum/'$iter'}'
+grep Dropout_B  $logName | awk '{sum+=$3}END {print "Dropout_B = " sum/'$iter'}'
+
+grep SplitTable_F  $logName | awk '{sum+=$3}END {print "SplitTable_F = " sum/'$iter'}'
+grep SplitTable_B  $logName | awk '{sum+=$3}END {print "SplitTable_B = " sum/'$iter'}'
+
+grep Reshape_F  $logName | awk '{sum+=$3}END {print "Reshape_F = " sum/'$iter'}'
+grep Reshape_B  $logName | awk '{sum+=$3}END {print "Reshape_B = " sum/'$iter'}'
+
+grep Optim         $logName | awk '{sum+=$3}END {print "Optim        = " sum/'$iter'}'
+grep dataloader    $logName | awk '{sum+=$3}END {print "dataloader   = " sum/'$iter'}'
+grep copyTensorTable $logName | awk '{sum+=$3}END {print "copyTensorTable = " sum/'$iter'}'
+
