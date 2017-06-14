@@ -48,6 +48,16 @@ grep SplitTable_B  $logName | awk '{sum+=$3}END {print "SplitTable_B = " sum/'$i
 grep Reshape_F  $logName | awk '{sum+=$3}END {print "Reshape_F = " sum/'$iter'}'
 grep Reshape_B  $logName | awk '{sum+=$3}END {print "Reshape_B = " sum/'$iter'}'
 
+
+grep LookupTable_F  $logName | awk '{sum+=$3}END {print "LookupTable_F = " sum/'$iter'}'
+grep LookupTable_B  $logName | awk '{sum+=$3}END {print "LookupTable_B = " sum/'$iter'}'
+
+grep Replicate_F  $logName | awk '{sum+=$3}END {print "Replicate_F = " sum/'$iter'}'
+grep Replicate_B  $logName | awk '{sum+=$3}END {print "Replicate_B = " sum/'$iter'}'
+
+grep Sum_F  $logName | awk '{sum+=$3}END {print "Sum_F = " sum/'$iter'}'
+grep Sum_B  $logName | awk '{sum+=$3}END {print "Sum_B = " sum/'$iter'}'
+
 grep Optim         $logName | awk '{sum+=$3}END {print "Optim        = " sum/'$iter'}'
 grep dataloader    $logName | awk '{sum+=$3}END {print "dataloader   = " sum/'$iter'}'
 grep copyTensorTable $logName | awk '{sum+=$3}END {print "copyTensorTable = " sum/'$iter'}'
