@@ -128,6 +128,7 @@ function Trainer:eval(data)
   local loss = 0
   local totalWords = 0
 
+--[[
   self.model:evaluate()
 
   for i = 1, data:batchCount() do
@@ -137,7 +138,7 @@ function Trainer:eval(data)
   end
 
   self.model:training()
-
+]]--
   return math.exp(loss / totalWords)
 end
 
