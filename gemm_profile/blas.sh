@@ -10,7 +10,7 @@ logName=$1
 #grep sgemv blas_10_50.log | awk '{sum+=$4} END {print sum/40}'
 #grep saxpy blas_10_50.log | awk '{sum+=$4} END {print sum/40}'
 
-grep iteration $logName | awk '{sum+=$4} END {print sum/40}'
+grep "iteration =" $logName | awk '{sum+=$4} END {print sum/40}'
 grep sgemm $logName | awk '{sum+=$4} END {print sum/40}'
 grep sgemv $logName | awk '{sum+=$4} END {print sum/40}'
 grep saxpy $logName | awk '{sum+=$4} END {print sum/40}'
