@@ -31,6 +31,16 @@ WiFi --> wi￨C fi￨C
 TVs --> tv￨U s￨L
 ```
 
+## Alphabet Segmentation
+Two options provide specific tokenization depending on alphabet:
+
+* `-segment_alphabet_change`: tokenize a sequence between two letters when their alphabets differ - for instance between a Latin alphabet character and a Han character.
+* `-segment_alphabet Alphabet`: tokenize all words of the indicated alphabet into characters - for instance to split a chinese sentence into characters, use `-segment_alphabet Han`:
+
+```text
+君子之心不胜其小，而气量涵盖一世。 --> 君 子 之 心 不 胜 其 小 ， 而 气 量 涵 盖 一 世 。
+```
+
 ## BPE
 
 OpenNMT's BPE module fully supports the [original BPE](https://github.com/rsennrich/subword-nmt) as default mode:
@@ -76,4 +86,4 @@ constitution --> con￨l sti￨l tu￨l tion￨l
 ```
 
 !!! note "Note"
-    Use Lua 5.2 if you encounter any memory issue while using `learn_bpe.lua` (e.g. `-size` is too big). Otherwise, stay with Lua 5.1 for better efficiency.
+    Use Lua 5.2 if you encounter any memory issue while using `learn_bpe.lua` (e.g. `-size` is too big). Otherwise, stay with LuaJIT for better efficiency.

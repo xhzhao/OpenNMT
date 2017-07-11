@@ -43,7 +43,7 @@ function PDBiEncoder:__init(args, input)
   self.args = onmt.utils.ExtendedCmdLine.getModuleOpts(args, options)
   self.args.multiplier = math.pow(self.args.pdbrnn_reduction, args.layers - 1)
   self.args.hiddenSize = args.rnn_size
-  self.args.numEffectiveLayers = 0
+  self.args.numStates = 0
 
   for i = 1, args.layers do
     local layerArgs = onmt.utils.Tensor.deepClone(args)
@@ -65,7 +65,7 @@ function PDBiEncoder:__init(args, input)
     end
 
     local brnn = onmt.BiEncoder(layerArgs, input)
-    self.args.numEffectiveLayers = self.args.numEffectiveLayers + brnn.args.numEffectiveLayers
+    self.args.numStates = self.args.numStates + brnn.args.numStates
     self:add(brnn)
   end
 
@@ -82,6 +82,7 @@ function PDBiEncoder.load(pretrained, className)
   end
 
   self.args = pretrained.args
+  self.args.numStates = self.args.numStates or self.args.numEffectiveLayers -- Backward compatibility.
 
   self:resetPreallocation()
   return self
@@ -112,39 +113,14 @@ function PDBiEncoder:resetPreallocation()
   self.gradContextProto = torch.Tensor()
 end
 
-function PDBiEncoder:maskPadding()
-  for i, layer in ipairs(self.modules) do
-    if i == 1 or self.args.pdbrnn_reduction == 1 then
-      layer:maskPadding()
-    end
-  end
-end
+function PDBiEncoder:forward(batch, initial_states)
+  assert(not initial_states, "Cannot apply bidirectional Encoder incrementally")
 
--- size of context vector
-function PDBiEncoder:contextSize(sourceSize, sourceLength)
-  local contextLength = math.ceil(sourceLength / self.args.multiplier)
-  local contextSize
-
-  if type(sourceSize) == 'table' then
-    contextSize = {}
-    for i = 1, #sourceSize do
-      table.insert(contextSize, math.ceil(sourceSize[i] / self.args.multiplier))
-    end
-  elseif type(sourceSize) == 'int' then
-    contextSize = math.ceil(sourceSize / self.args.multiplier)
-  else
-    contextSize = torch.ceil(sourceSize / self.args.multiplier)
-  end
-
-  return contextSize, contextLength
-end
-
-function PDBiEncoder:forward(batch)
   -- Make source length divisible by the total reduction.
-  batch.sourceLength = math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier
+  batch:resizeSource(math.ceil(batch.sourceLength / self.args.multiplier) * self.args.multiplier)
 
   if self.statesProto == nil then
-    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numEffectiveLayers,
+    self.statesProto = onmt.utils.Tensor.initTensorTable(self.args.numStates,
                                                          self.stateProto,
                                                          { batch.size, self.args.hiddenSize })
   end
@@ -192,7 +168,13 @@ function PDBiEncoder:forward(batch)
                 context:size(3) * self.args.pdbrnn_reduction)
       end
 
-      table.insert(self.inputs, onmt.data.BatchTensor.new(nextContext, batch.sourceSize))
+      local newSizes = self.inputs[i].sourceSize
+        :clone()
+        :float()
+        :div(self.args.pdbrnn_reduction)
+        :ceil()
+        :typeAs(self.inputs[i].sourceSize)
+      table.insert(self.inputs, onmt.data.BatchTensor.new(nextContext, newSizes))
     end
   end
 
