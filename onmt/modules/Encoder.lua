@@ -109,7 +109,8 @@ function Encoder:__init(args, inputNetwork)
   self.args.dropout_type = args.dropout_type
 
   parent.__init(self, self:_buildModel())
-  self.mklnnLSTM = mklnn.LSTM(inputNetwork.inputSize, args.rnn_size)
+
+  self.mklnnLSTM = mklnn.LSTMFullStep(500, 500)
 
   self:resetPreallocation()
 end
@@ -218,12 +219,26 @@ function Encoder:forward(batch, initial_states)
 
   if self.train then
     self.inputs = {}
-
     if self.args.dropout_type == 'variational' then
       -- Initialize noise for variational dropout.
       onmt.VariationalDropout.initializeNetwork(self.network)
     end
   end
+
+  --xhzhao
+  local weight = self.rnn:parameters()
+  local wx   = weight[1]
+  local wx_b = weight[2]
+  local wh   = weight[3]
+  local wh_b = weight[4]
+  --wx:fill(3)
+  --wh:fill(2)
+  wx_b:zero()
+  wh_b:zero()
+  local WETensor = torch.FloatTensor(batch.sourceLength, batch.size,  outputSize)
+  local inputs_mklnn = {}
+
+  onmt.utils.Table.append(inputs_mklnn, states)
 
   -- Act like nn.Sequential and call each clone in a feed-forward
   -- fashion.
@@ -234,56 +249,17 @@ function Encoder:forward(batch, initial_states)
     onmt.utils.Table.append(inputs, states)
     table.insert(inputs, batch:getSourceInput(t))
 
+    --xhzhao
+    local we = self.inputNet:forward(inputs[3])
+    WETensor[t] = we
+
+
     if self.train then
       -- Remember inputs for the backward pass.
       self.inputs[t] = inputs
     end
 
-    local weight = self.rnn:parameters()
-    local wx   = weight[1]
-    local wx_b = weight[2]
-    local wh   = weight[3]
-    local wh_b = weight[4]
-    --wx:fill(3)
-    --wh:fill(2)
-    wx_b:zero()
-    wh_b:zero()
-
-
-
     states = self:net(t):forward(inputs)
-
-    print("-----states-----")
-    --print(states)
-    print("states[1]:sum() = ",states[1]:sum())
-    print("states[2]:sum() = ",states[2]:sum())
-    --print("-----inputs-----")
-    --print(inputs)
-
-    -- xhzhao code
-    local we = self.inputNet:forward(inputs[3])
-    local inputs_mklnn = inputs
-
-    --print("-----we-----")
-    --print("we size = ", we:size(1), we:size(2))
-    inputs_mklnn[3] = we:resize(we:size(1), 1, we:size(2))
-
-    --print(wx:size())
-    --print(self.mklnnLSTM.weightX:size())
-    --print(wh:size())
-    --print(self.mklnnLSTM.weightH:size())
-    self.mklnnLSTM.weightX:copy(wx:transpose(1,2))
-    self.mklnnLSTM.weightH:copy(wh:transpose(1,2))
-
-    --self.mklnnLSTM.weight:copy
-    local output_mklnn = self.mklnnLSTM:forward(inputs_mklnn)
-    print("-----mklnn output-----")
-    --print(output_mklnn)
-    print("output_mklnn[1]:sum() = ",output_mklnn[2]:sum())
-    print("output_mklnn[2]:sum() = ",output_mklnn[1]:sum())
-
-
-
 
     -- Make sure it always returns table.
     if type(states) ~= "table" then states = { states } end
@@ -302,6 +278,45 @@ function Encoder:forward(batch, initial_states)
     -- Copy output (h^L_t = states[#states]) to context.
     context[{{}, t}]:copy(states[#states])
   end
+
+  -- xhzhao code
+  print("-----context-----")
+  print(context:size())
+  print("context sum = ", context:sum())
+  print("-----states-----")
+  print(states)
+  print("states[1]  sum = ", states[1]:sum())
+  print("states[2]  sum = ", states[2]:sum())
+
+  print("batch.sourceLength = ",batch.sourceLength)
+
+    print("-----WETensor-----")
+    print(WETensor:size())
+
+
+    table.insert(inputs_mklnn, WETensor:transpose(1,2))
+    print("-----inputs_mklnn-----")
+    print(inputs_mklnn)
+
+    --[[
+    print(wx:size())
+    print(self.mklnnLSTM.weightX:size())
+    print(wh:size())
+    print(self.mklnnLSTM.weightH:size())
+    ]]--
+
+    self.mklnnLSTM.weightX:copy(wx:transpose(1,2))
+    self.mklnnLSTM.weightH:copy(wh:transpose(1,2))
+
+    local output_mklnn = self.mklnnLSTM:forward(inputs_mklnn)
+    print("-----mklnn output-----")
+    print(output_mklnn)
+    print("output_mklnn c:sum() = ",output_mklnn[2]:sum())
+    print("output_mklnn h:sum() = ",output_mklnn[1]:sum())
+    print("output_mklnn next_c:sum() = ",output_mklnn[4]:sum())
+    print("output_mklnn next_h:sum() = ",output_mklnn[3]:sum())
+
+
 
   return states, context
 end
