@@ -114,7 +114,7 @@ function Trainer:__init(args, model, dicts, firstBatch)
     if self.params[idx] then
       _G.params, _G.gradParams = self.params[idx], self.gradParams[idx]
     else
-      _G.params, _G.gradParams = _G.model:getParams()
+      _G.params, _G.gradParams = _G.model:getParams(true)
     end
 
     return idx, _G.params, _G.gradParams
@@ -128,7 +128,6 @@ function Trainer:eval(data)
   local loss = 0
   local totalWords = 0
 
---[[
   self.model:evaluate()
 
   for i = 1, data:batchCount() do
@@ -138,7 +137,7 @@ function Trainer:eval(data)
   end
 
   self.model:training()
-]]--
+
   return math.exp(loss / totalWords)
 end
 

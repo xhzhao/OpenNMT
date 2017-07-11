@@ -110,7 +110,6 @@ end
 function Seq2Seq:__init(args, dicts)
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
-  self.args.uneven_batches = args.uneven_batches
 
   if not dicts.src then
     -- the input is already a vector
@@ -141,7 +140,6 @@ function Seq2Seq.load(args, models, dicts)
 
   parent.__init(self, args)
   onmt.utils.Table.merge(self.args, onmt.utils.ExtendedCmdLine.getModuleOpts(args, options))
-  self.args.uneven_batches = args.uneven_batches
 
   self.models.encoder = onmt.Factory.loadEncoder(models.encoder)
   self.models.decoder = onmt.Factory.loadDecoder(models.decoder)
@@ -197,54 +195,24 @@ function Seq2Seq:getOutput(batch)
   return batch.targetOutput
 end
 
-function Seq2Seq:maskPadding(batch)
-  self.models.encoder:maskPadding()
-  if batch and batch.uneven then
-    self.models.decoder:maskPadding(self.models.encoder:contextSize(batch.sourceSize, batch.sourceLength))
-  else
-    self.models.decoder:maskPadding()
-  end
-end
-
 function Seq2Seq:forwardComputeLoss(batch)
-  if self.args.uneven_batches then
-    self:maskPadding(batch)
-  end
-
   local encoderStates, context = self.models.encoder:forward(batch)
   local decoderInitStates = self.models.bridge:forward(encoderStates)
   return self.models.decoder:computeLoss(batch, decoderInitStates, context, self.criterion)
 end
 
 function Seq2Seq:trainNetwork(batch, dryRun)
-  if self.args.uneven_batches then
-    self:maskPadding(batch)
-  end
-  local time_start = sys.clock()
-
   local encStates, context = self.models.encoder:forward(batch)
-  local time_1 = sys.clock()
-  print("Encoder_F iteration time = ",time_1 - time_start)
   local decInitStates = self.models.bridge:forward(encStates)
-  local time_2 = sys.clock()
-  print("Bridge_F iteration time = ",time_2 - time_1)
   local decOutputs = self.models.decoder:forward(batch, decInitStates, context)
-  local time_3 = sys.clock()
-  print("Decoder_F iteration time = ",time_3 - time_2)
 
   if dryRun then
     decOutputs = onmt.utils.Tensor.recursiveClone(decOutputs)
   end
 
   local decGradInputStates, gradContext, loss, indvLoss = self.models.decoder:backward(batch, decOutputs, self.criterion)
-  local time_4 = sys.clock()
-  print("Encoder_B iteration time = ",time_4 - time_3)
   local encGradOutputStates = self.models.bridge:backward(encStates, decGradInputStates)
-  local time_5 = sys.clock()
-  print("Bridge_B iteration time = ",time_5 - time_4)
   self.models.encoder:backward(batch, encGradOutputStates, gradContext)
-  local time_6 = sys.clock()
-  print("Decoder_B iteration time = ",time_6 - time_5)
 
   return loss, indvLoss
 end
