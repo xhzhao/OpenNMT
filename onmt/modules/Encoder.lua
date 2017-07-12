@@ -279,6 +279,7 @@ function Encoder:forward(batch, initial_states)
     context[{{}, t}]:copy(states[#states])
   end
 
+--[[
   -- xhzhao code
   print("-----context-----")
   print(context:size())
@@ -292,30 +293,30 @@ function Encoder:forward(batch, initial_states)
 
     print("-----WETensor-----")
     print(WETensor:size())
-
+]]--
 
     table.insert(inputs_mklnn, WETensor:transpose(1,2))
-    print("-----inputs_mklnn-----")
-    print(inputs_mklnn)
-
-    --[[
-    print(wx:size())
-    print(self.mklnnLSTM.weightX:size())
-    print(wh:size())
-    print(self.mklnnLSTM.weightH:size())
-    ]]--
+    --print("-----inputs_mklnn-----")
+    --print(inputs_mklnn)
 
     self.mklnnLSTM.weightX:copy(wx:transpose(1,2))
     self.mklnnLSTM.weightH:copy(wh:transpose(1,2))
 
     local output_mklnn = self.mklnnLSTM:forward(inputs_mklnn)
+--[[
     print("-----mklnn output-----")
     print(output_mklnn)
     print("output_mklnn c:sum() = ",output_mklnn[2]:sum())
     print("output_mklnn h:sum() = ",output_mklnn[1]:sum())
     print("output_mklnn next_c:sum() = ",output_mklnn[4]:sum())
     print("output_mklnn next_h:sum() = ",output_mklnn[3]:sum())
+]]--
 
+
+  check_1 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[1], -context)), 1e-6))
+  check_2 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[4], -states[1])), 1e-6))
+  check_3 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[3], -states[2])), 1e-6))
+  print("context check = ",check_1, check_2, check_3)
 
 
   return states, context
