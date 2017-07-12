@@ -110,7 +110,7 @@ function Encoder:__init(args, inputNetwork)
 
   parent.__init(self, self:_buildModel())
 
-  self.mklnnLSTM = mklnn.LSTMFullStep(500, 500)
+  self.mklnnLSTM = mklnn.LSTMFullStep(500, 500):float()
 
   self:resetPreallocation()
 end
