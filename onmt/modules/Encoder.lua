@@ -354,9 +354,9 @@ function Encoder:forward(batch, initial_states)
     print("output_mklnn next_h:sum() = ",output_mklnn[3]:sum())
 ]]--
 
-  check_1 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[1], -context)), 1e-3))
-  check_2 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[4], -states[1])), 1e-5))
-  check_3 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[3], -states[2])), 1e-5))
+  check_1 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[1]:transpose(1,2), -context)), 1e-6))
+  check_2 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[4], -states[1])), 1e-6))
+  check_3 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[3], -states[2])), 1e-6))
   print("context check = ",check_1, check_2, check_3)
 
 
