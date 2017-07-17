@@ -278,7 +278,6 @@ function Encoder:forward(batch, initial_states)
     -- Copy output (h^L_t = states[#states]) to context.
     context[{{}, t}]:copy(states[#states])
   end
-
 --[[
   -- xhzhao code
   print("-----context-----")
@@ -292,16 +291,59 @@ function Encoder:forward(batch, initial_states)
   print("batch.sourceLength = ",batch.sourceLength)
 
     print("-----WETensor-----")
-    print(WETensor:size())
+    print("WETensor sum = ", WETensor:sum(), "type = ",WETensor:type())
+    WETensor_size = WETensor:size()
+    local T = WETensor_size[1]
+    local N = WETensor_size[2]
+    local H = WETensor_size[3]
+    print("T = ",T)
+    print("N = ",N)
+    print("H = ",H)
+
+    --table.insert(inputs_mklnn, WETensor)
+    print("-----inputs_mklnn-----")
+    print("inputs_mklnn[1] sum = ", inputs_mklnn[1]:sum())
+    print("inputs_mklnn[2] sum = ", inputs_mklnn[2]:sum())
+    print("inputs_mklnn[3] sum = ", inputs_mklnn[3]:sum())
+
+    print("wx size = ",wx:size())
+    print("wx sum  = ",wx:sum())
+
+    local tempWx = wx:clone()
+    local tempWh = wh:clone()
+    tempWx:resize(4,H,H):transpose(2,3)
+    tempWh:resize(4,H,H):transpose(2,3)
+
+    print("wxi sum = ",tempWx[1]:sum())
+    print("wxf sum = ",tempWx[2]:sum())
+    print("wxo sum = ",tempWx[3]:sum())
+    print("wxt sum = ",tempWx[4]:sum())
 ]]--
 
-    table.insert(inputs_mklnn, WETensor:transpose(1,2))
-    --print("-----inputs_mklnn-----")
-    --print(inputs_mklnn)
+    table.insert(inputs_mklnn, WETensor)
+    WETensor_size = WETensor:size()
+    local T = WETensor_size[1]
+    local N = WETensor_size[2]
+    local H = WETensor_size[3]
+    local temp1 = wx:transpose(1,2)
+    self.mklnnLSTM.weightX[1] = temp1[{{}, {1,H}}]
+    self.mklnnLSTM.weightX[2] = temp1[{{}, {H+1,2*H}}]
+    self.mklnnLSTM.weightX[3] = temp1[{{}, {2*H+1,3*H}}]
+    self.mklnnLSTM.weightX[4] = temp1[{{}, {3*H+1,4*H}}]
 
-    self.mklnnLSTM.weightX:copy(wx:transpose(1,2))
-    self.mklnnLSTM.weightH:copy(wh:transpose(1,2))
+    local temp2 = wh:transpose(1,2)
+    self.mklnnLSTM.weightH[1] = temp2[{{}, {1,H}}]
+    self.mklnnLSTM.weightH[2] = temp2[{{}, {H+1,2*H}}]
+    self.mklnnLSTM.weightH[3] = temp2[{{}, {2*H+1,3*H}}]
+    self.mklnnLSTM.weightH[4] = temp2[{{}, {3*H+1,4*H}}]
 
+--[[
+    self.mklnnLSTM.weightX:copy(tempWx)
+    self.mklnnLSTM.weightH:copy(tempWh)
+    print("self.mklnnLSTM.weightX size = ", self.mklnnLSTM.weightX:size())
+    print("self.mklnnLSTM.weightX sum  = ", self.mklnnLSTM.weightX:sum())
+    print("self.mklnnLSTM.weightH sum  = ", self.mklnnLSTM.weightH:sum())
+]]--
     local output_mklnn = self.mklnnLSTM:forward(inputs_mklnn)
 --[[
     print("-----mklnn output-----")
@@ -312,10 +354,9 @@ function Encoder:forward(batch, initial_states)
     print("output_mklnn next_h:sum() = ",output_mklnn[3]:sum())
 ]]--
 
-
-  check_1 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[1], -context)), 1e-6))
-  check_2 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[4], -states[1])), 1e-6))
-  check_3 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[3], -states[2])), 1e-6))
+  check_1 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[1], -context)), 1e-3))
+  check_2 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[4], -states[1])), 1e-5))
+  check_3 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[3], -states[2])), 1e-5))
   print("context check = ",check_1, check_2, check_3)
 
 
