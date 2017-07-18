@@ -240,6 +240,7 @@ function Encoder:forward(batch, initial_states)
 
   onmt.utils.Table.append(inputs_mklnn, states)
 
+  local ori_start = sys.clock()
   -- Act like nn.Sequential and call each clone in a feed-forward
   -- fashion.
   for t = 1, batch.sourceLength do
@@ -278,6 +279,7 @@ function Encoder:forward(batch, initial_states)
     -- Copy output (h^L_t = states[#states]) to context.
     context[{{}, t}]:copy(states[#states])
   end
+  local ori_end = sys.clock()
 --[[
   -- xhzhao code
   print("-----context-----")
@@ -344,7 +346,9 @@ function Encoder:forward(batch, initial_states)
     print("self.mklnnLSTM.weightX sum  = ", self.mklnnLSTM.weightX:sum())
     print("self.mklnnLSTM.weightH sum  = ", self.mklnnLSTM.weightH:sum())
 ]]--
+    local mkl_start = sys.clock()
     local output_mklnn = self.mklnnLSTM:forward(inputs_mklnn)
+    local mkl_end = sys.clock()
 --[[
     print("-----mklnn output-----")
     print(output_mklnn)
@@ -358,7 +362,7 @@ function Encoder:forward(batch, initial_states)
   check_2 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[4], -states[1])), 1e-6))
   check_3 = torch.all(torch.lt(torch.abs(torch.add(output_mklnn[3], -states[2])), 1e-6))
   print("context check = ",check_1, check_2, check_3)
-
+  print("T="..T..", N="..N..", H="..H.." ori_time = ",ori_end-ori_start, " mkl_time = ", mkl_end - mkl_start," ori/mkl = ",(ori_end-ori_start)/(mkl_end - mkl_start))
 
   return states, context
 end
