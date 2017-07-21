@@ -327,25 +327,12 @@ function Encoder:forward(batch, initial_states)
     local T = WETensor_size[1]
     local N = WETensor_size[2]
     local H = WETensor_size[3]
-    local temp1 = wx:transpose(1,2)
-    self.mklnnLSTM.weightX[1] = temp1[{{}, {1,H}}]
-    self.mklnnLSTM.weightX[2] = temp1[{{}, {H+1,2*H}}]
-    self.mklnnLSTM.weightX[3] = temp1[{{}, {2*H+1,3*H}}]
-    self.mklnnLSTM.weightX[4] = temp1[{{}, {3*H+1,4*H}}]
 
-    local temp2 = wh:transpose(1,2)
-    self.mklnnLSTM.weightH[1] = temp2[{{}, {1,H}}]
-    self.mklnnLSTM.weightH[2] = temp2[{{}, {H+1,2*H}}]
-    self.mklnnLSTM.weightH[3] = temp2[{{}, {2*H+1,3*H}}]
-    self.mklnnLSTM.weightH[4] = temp2[{{}, {3*H+1,4*H}}]
+    self.mklnnLSTM.weightX:copy(wx:transpose(1,2))
+    self.mklnnLSTM.weightH:copy(wh:transpose(1,2))
+    local bias_tmp = wx_b+wh_b;
+    self.mklnnLSTM.bias:copy(bias_tmp)
 
---[[
-    self.mklnnLSTM.weightX:copy(tempWx)
-    self.mklnnLSTM.weightH:copy(tempWh)
-    print("self.mklnnLSTM.weightX size = ", self.mklnnLSTM.weightX:size())
-    print("self.mklnnLSTM.weightX sum  = ", self.mklnnLSTM.weightX:sum())
-    print("self.mklnnLSTM.weightH sum  = ", self.mklnnLSTM.weightH:sum())
-]]--
     local mkl_start = sys.clock()
     local output_mklnn = self.mklnnLSTM:forward(inputs_mklnn)
     local mkl_end = sys.clock()
